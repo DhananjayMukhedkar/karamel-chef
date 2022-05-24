@@ -1,0 +1,86 @@
+name: HopsworksVagrantSingleNode
+baremetal:
+    username: vagrant
+
+cookbooks:
+  hopsworks:
+    github: DhananjayMukhedkar/hopsworks-chef
+    branch: HOPSWORKS-3158
+
+attrs:
+  install:
+    dir: /srv/hops
+    enterprise:
+      install: true
+      download_url: "https://nexus.hops.works/repository"
+      username: "dhananjay"
+      password: "Vb3qhdEePDfKgFGQ"
+  hops:
+    rmappsecurity:
+      actor_class: "org.apache.hadoop.yarn.server.resourcemanager.security.DevHopsworksRMAppSecurityActions"
+  alertmanager:
+    email:
+      to: sre@logicalclocks.com
+      from: hopsworks@logicalclocks.com
+      smtp_host: mail.hello.com
+  prometheus:
+    retention_time: "2h"
+  hopsworks:
+    featurestore_online: true
+    kagent_liveness:
+      enabled: true
+      threshold: "40s"
+    hopsworks_public_host: 'hopsworks0.logicalclocks.com'
+  elastic:
+    opensearch_security:
+      jwt:
+        exp_ms: "1800000"
+      audit:
+        enable_rest: "true"
+        enable_transport: "false"
+  ndb:
+    LockPagesInMainMemory: 0
+    TotalMemoryConfig: 4G
+    NumCPUs: 4
+    
+groups:
+  namenodes:
+    size: 1
+    baremetal:
+      ip: 10.0.2.15
+    recipes:
+      - kagent
+      - conda
+      - ndb::mgmd
+      - ndb::ndbd
+      - ndb::mysqld
+      - hops::ndb
+      - hops::rm
+      - hops::nn
+      - hops::jhs
+      - hadoop_spark::yarn
+      - hadoop_spark::historyserver
+      - flink::yarn
+      - flink::historyserver
+      - elastic
+      - livy
+      - kzookeeper
+      - kkafka
+      - epipe
+      - hopsworks
+      - hopsmonitor
+      - hopslog
+      - hopslog::_filebeat-spark
+      - hopslog::_filebeat-serving
+      - hopslog::_filebeat-jupyter
+      - hops::dn
+      - hops::nm
+      - tensorflow
+      - hive2
+      - hops_airflow
+      - hopsmonitor::prometheus
+      - hopsmonitor::alertmanager
+      - hopsmonitor::node_exporter
+      - consul::master
+      - hops::docker_registry
+      - onlinefs
